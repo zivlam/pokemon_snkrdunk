@@ -1,0 +1,45 @@
+name: SNKRDUNK Real-time Tracker
+
+# 觸發條件設定
+on:
+  schedule:
+    # cron 語法：分 時 日 月 星期 (UTC 時間)
+    # */30 * * * * 代表每 30 分鐘執行一次
+    - cron: '*/30 * * * *'
+  
+  # 允許我們在 GitHub 網頁上手動點擊執行，方便測試
+  workflow_dispatch:
+
+jobs:
+  scrape-and-update:
+    runs-on: ubuntu-latest # 使用免費的 Linux 虛擬機
+
+    steps:
+    # 1. 取得儲存庫中的程式碼
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    # 2. 安裝 Python 環境
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9' 
+
+    # 3. 安裝爬蟲所需的套件
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests firebase-admin urllib3
+
+    # 4. 把保險箱裡的 Firebase JSON 重建回檔案，讓 Python 可以讀取
+    - name: Create Firebase Key File
+      env:
+        FIREBASE_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      run: |
+        echo "$FIREBASE_KEY" > serviceAccountKey.json
+
+    # 5. 執行爬蟲腳本！(並將 Cookie 注入環境變數)
+    - name: Run Scraper
+      env:
+        SNKRDUNK_COOKIE: ${{ secrets.SNKRDUNK_COOKIE }}
+      run: python snkrdunk_backend.py
