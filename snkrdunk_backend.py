@@ -9,6 +9,7 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
 import urllib3
+import time  # Added time module for delays
 
 # Disable urllib3 OpenSSL warnings
 urllib3.disable_warnings(urllib3.exceptions.NotOpenSSLWarning)
@@ -88,7 +89,7 @@ def update_card_to_firebase(product_id, filter_psa10=True):
             # Handle different API response structures
             histories = data.get('histories') or data.get('tradingHistories') or data.get('data')
             
-            if not histories:
+            if histories is None:
                 print(f"[Warning] No data list found for ID {product_id}.")
                 return
 
@@ -120,8 +121,8 @@ def update_card_to_firebase(product_id, filter_psa10=True):
                     "priceHKD": price_hkd
                 })
 
-            if db and parsed_history:
-                # Push array and timestamp to Firebase
+            if db:
+                # Always push to Firebase to initialize the document, even if history is empty
                 doc_ref = db.collection('snkrdunk_cards').document(str(product_id))
                 doc_ref.set({
                     'id': str(product_id),
@@ -130,9 +131,11 @@ def update_card_to_firebase(product_id, filter_psa10=True):
                     'lastUpdated': firestore.SERVER_TIMESTAMP
                 }, merge=True) 
                 
-                print(f"✅ Card {product_id} successfully pushed to Firebase! Latest Price: HK${latest_price}")
-            elif not parsed_history:
-                print(f"⚠️ No PSA 10 records found for {product_id} in the recent history.")
+                if parsed_history:
+                    print(f"✅ Card {product_id} successfully pushed! Latest Price: HK${latest_price}")
+                else:
+                    print(f"⚠️ Card {product_id} pushed with HK$0 (No recent PSA 10 records).")
+                    
         else:
             print(f"❌ Error: Status code {response.status_code} for ID {product_id}")
             
@@ -159,4 +162,6 @@ if __name__ == "__main__":
     print("🚀 Starting automated scraping task...")
     for card_id in cards_to_track:
         update_card_to_firebase(card_id)
+        time.sleep(2)  # Pause for 2 seconds between requests to avoid getting blocked
+        
     print("🏁 Automated task completed!")
