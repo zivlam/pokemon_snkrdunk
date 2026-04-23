@@ -9,7 +9,7 @@ import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
 import urllib3
-import time  # Added time module for delays
+import time
 
 # Disable urllib3 OpenSSL warnings
 urllib3.disable_warnings(urllib3.exceptions.NotOpenSSLWarning)
@@ -50,7 +50,8 @@ def format_to_hk_time(utc_date_str):
 
 def update_card_to_firebase(product_id, filter_psa10=True):
     """
-    Fetch SNKRDUNK trading history, filter for PSA 10, and upload to Firebase
+    Fetch SNKRDUNK trading history, filter for strictly PSA 10, 
+    keep only 3 days of history, and upload to Firebase
     """
     hostname = "snkrdunk.com"
     url = f"https://{hostname}/en/v1/products/SW---{product_id}/trading-histories"
@@ -86,11 +87,10 @@ def update_card_to_firebase(product_id, filter_psa10=True):
         
         if response.status_code == 200:
             data = response.json()
-            # Handle different API response structures
             histories = data.get('histories') or data.get('tradingHistories') or data.get('data')
             
             if histories is None:
-                print(f"[Warning] No data list found for ID {product_id}.")
+                print(f"[Warning] No data list found for ID {product_id}.\n")
                 return
 
             parsed_history = []
@@ -100,7 +100,6 @@ def update_card_to_firebase(product_id, filter_psa10=True):
             hk_now = datetime.utcnow() + timedelta(hours=8)
             three_days_ago = hk_now - timedelta(days=3)
 
-            # Parse the latest trading records
             for item in histories:
                 cond = item.get('condition') or item.get('state') or 'N/A'
                 
@@ -170,20 +169,25 @@ def update_card_to_firebase(product_id, filter_psa10=True):
         print(f"[Exception occurred]: {e}\n")
 
 if __name__ == "__main__":
-    # Consolidated list of all 94 cards
+    # Complete list of all old and new card IDs
     cards_to_track = [
-        '722239', '730952', '141410', '325078', '395201', '657364', '128085', '100092', 
-        '100090', '93381', '91243', '91246', '93078', '91155', '776365', '115267', 
-        '98531', '724996', '186243', '455596', '328774', '776371', '704385', '91252', 
-        '663638', '107450', '91425', '704401', '730956', '107448', '91260', '520383', 
-        '91423', '120250', '93015', '91227', '721965', '91377', '674418', '618446', 
-        '128181', '455595', '585213', '704407', '744298', '230981', '289056', '91163', 
-        '164250', '607941', '618445', '618447', '657365', '186428', '128147', '128121', 
-        '128101', '396405', '93096', '131236', '408333', '128212', '663661', '607471', 
-        '91119', '459741', '91178', '91118', '185276', '601144', '105553', '91127', 
-        '253253', '601146', '606347', '106796', '104514', '91176', '104548', '91422', 
-        '91538', '390544', '127035', '93092', '149334', '180170', '128092', '132270', 
-        '132284', '91283', '387059', '128117', '146897', '132279'
+        '730952', '722239', '141410', '325078', '395201', '657364', '128085', '100092', '100090', '93381', '91243', 
+        '91246', '93078', '91155', '776365', '115267', '98531', '724996', '186243', '455596', '328774', '776371', 
+        '704385', '91252', '663638', '107450', '91425', '704401', '730956', '107448', '91260', '520383', '91423', 
+        '120250', '93015', '91227', '721965', '91377', '674418', '618446', '128181', '455595', '585213', '704407', 
+        '744298', '230981', '289056', '91163', '164250', '607941', '618445', '618447', '657365', '186428', '128147', 
+        '128121', '128101', '396405', '93096', '131236', '408333', '128212', '663661', '607471', '91119', '459741', 
+        '91178', '91118', '185276', '601144', '105553', '91127', '253253', '601146', '606347', '106796', '104514', 
+        '91176', '104548', '91422', '91538', '390544', '127035', '93092', '149334', '180170', '128092', '132270', 
+        '132284', '91283', '387059', '128117', '146897', '132279',
+        # --- Newly Added Missing Cards ---
+        '502986', '91158', '488418', '128231', '162095', '105568', '91192', '91191', '103079', '91156', '124080', 
+        '135232', '332792', '326267', '469628', '141445', '671484', '156432', '126676', '292564', '292565', '674424', 
+        '199043', '489823', '485638', 'SV9-126', '505952', '407397', '106802', '116069', '418741', '160147', '103080', 
+        '111868', '454071', '518774', '128089', '671486', '475194', '332798', '705192', '100081', '104784', '134393', 
+        '671489', '545622', 'SET_MCD_2025', 'RAD_CHAR_011', 'RAD_CHAR_015', '103803', '105005', '392953', '98529', 
+        '641578', '671488', '135980', '91159', '103771', '124079', '671483', '141443', '141444', '470986', '396076', 
+        '601145', '91160', '91157', '98530'
     ]
     
     print("🚀 Starting automated scraping task...")
