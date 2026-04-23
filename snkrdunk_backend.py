@@ -140,6 +140,14 @@ def update_card_to_firebase(product_id, filter_psa10=True):
                         "priceHKD": price_hkd
                     })
 
+            # Print the formatted clean English table
+            if parsed_history:
+                print(f"{'Date (HKT)':<20} | {'Condition':<10} | {'Price (HKD)'}")
+                print("-" * 55)
+                for record in parsed_history:
+                    print(f"{record['date']:<20} | {record['condition']:<10} | HK${record['priceHKD']}")
+                print("-" * 55)
+
             if db:
                 # Always push to Firebase to initialize the document, even if history is empty
                 doc_ref = db.collection('snkrdunk_cards').document(str(product_id))
@@ -151,15 +159,15 @@ def update_card_to_firebase(product_id, filter_psa10=True):
                 }, merge=True) 
                 
                 if parsed_history:
-                    print(f"✅ Card {product_id} successfully pushed! Latest Price: HK${latest_price}")
+                    print(f"✅ Card {product_id} successfully pushed! Latest Price: HK${latest_price}\n")
                 else:
-                    print(f"⚠️ Card {product_id} pushed with HK$0 (No recent PSA 10 records).")
+                    print(f"⚠️ Card {product_id} pushed with HK$0 (No recent PSA 10 records).\n")
                     
         else:
-            print(f"❌ Error: Status code {response.status_code} for ID {product_id}")
+            print(f"❌ Error: Status code {response.status_code} for ID {product_id}\n")
             
     except Exception as e:
-        print(f"[Exception occurred]: {e}")
+        print(f"[Exception occurred]: {e}\n")
 
 if __name__ == "__main__":
     # Consolidated list of all 94 cards
