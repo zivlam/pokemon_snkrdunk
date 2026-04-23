@@ -79,7 +79,8 @@ def update_card_to_firebase(product_id, filter_psa10=True):
         'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36',
     }
     
-    params = {'perPage': 10, 'page': 1, 'used': 'true'}
+    # Increase perPage to 100 to ensure we get enough raw records to extract 30 valid PSA 10s
+    params = {'perPage': 100, 'page': 1, 'used': 'true'}
 
     try:
         print(f"Fetching data (ID: {product_id})...")
@@ -96,11 +97,11 @@ def update_card_to_firebase(product_id, filter_psa10=True):
             parsed_history = []
             latest_price = 0
             
-            # Calculate the cutoff time for 3 days history (in HK Time)
-            hk_now = datetime.utcnow() + timedelta(hours=8)
-            three_days_ago = hk_now - timedelta(days=3)
-
             for item in histories:
+                # Stop collecting once we have 30 valid PSA 10 records
+                if len(parsed_history) >= 30:
+                    break
+
                 cond = item.get('condition') or item.get('state') or 'N/A'
                 
                 # Strictly filter for PSA 10 (removes spaces to match 'PSA 10' or 'PSA10' and ignores PSA 9)
@@ -118,26 +119,12 @@ def update_card_to_firebase(product_id, filter_psa10=True):
                 if latest_price == 0: 
                     latest_price = price_hkd
 
-                # Check if the trade is within the last 3 days
-                is_recent = True
-                try:
-                    trade_dt = datetime.strptime(hk_time, "%Y-%m-%d %H:%M:%S")
-                    if trade_dt < three_days_ago:
-                        is_recent = False
-                        # Since records are sorted newest to oldest, we can exit early 
-                        # if we have already captured the latest price.
-                        if latest_price != 0:
-                            break
-                except Exception:
-                    pass
-
-                if is_recent:
-                    parsed_history.append({
-                        "id": len(parsed_history) + 1,
-                        "date": hk_time,
-                        "condition": "PSA 10",
-                        "priceHKD": price_hkd
-                    })
+                parsed_history.append({
+                    "id": len(parsed_history) + 1,
+                    "date": hk_time,
+                    "condition": "PSA 10",
+                    "priceHKD": price_hkd
+                })
 
             # Print the formatted clean English table
             if parsed_history:
@@ -169,7 +156,7 @@ def update_card_to_firebase(product_id, filter_psa10=True):
         print(f"[Exception occurred]: {e}\n")
 
 if __name__ == "__main__":
-    # Complete list of all old and new card IDs
+    # Complete list of all old and new card IDs with corrected True SNKRDUNK IDs
     cards_to_track = [
         '730952', '722239', '141410', '325078', '395201', '657364', '128085', '100092', '100090', '93381', '91243', 
         '91246', '93078', '91155', '776365', '115267', '98531', '724996', '186243', '455596', '328774', '776371', 
@@ -183,11 +170,11 @@ if __name__ == "__main__":
         # --- Newly Added Missing Cards ---
         '502986', '91158', '488418', '128231', '162095', '105568', '91192', '91191', '103079', '91156', '124080', 
         '135232', '332792', '326267', '469628', '141445', '671484', '156432', '126676', '292564', '292565', '674424', 
-        '199043', '489823', '485638', 'SV9-126', '505952', '407397', '106802', '116069', '418741', '160147', '103080', 
+        '199043', '489823', '485638', '505956', '505952', '407397', '106802', '116069', '418741', '160147', '103080', 
         '111868', '454071', '518774', '128089', '671486', '475194', '332798', '705192', '100081', '104784', '134393', 
-        '671489', '545622', 'SET_MCD_2025', 'RAD_CHAR_011', 'RAD_CHAR_015', '103803', '105005', '392953', '98529', 
+        '671489', '545622', '91134', '103803', '105005', '392953', '98529', 
         '641578', '671488', '135980', '91159', '103771', '124079', '671483', '141443', '141444', '470986', '396076', 
-        '601145', '91160', '91157', '98530'
+        '601145', '91160', '91157', '98530', '601147'
     ]
     
     print("🚀 Starting automated scraping task...")
