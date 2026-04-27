@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -35,6 +36,18 @@ def format_to_hk_time(utc_date_str):
         return hk_dt.strftime("%Y-%m-%d %H:%M:%S")
     except Exception as e:
         return str(utc_date_str).replace('T', ' ').split('.')[0]
+
+def update_card_to_firebase(product_id, filter_psa10=True):
+    hostname = "snkrdunk.com"
+    HKD_RATE = 0.051
+    url = f"https://{hostname}/en/v1/products/SW---{product_id}/trading-histories"
+    
+    # 🌟 MODIFY HERE: Read the Cookie from system environment variables
+    raw_cookies = os.environ.get('SNKRDUNK_COOKIE')
+    
+    if not raw_cookies:
+        print("❌ Error: Cookie not found. Please check your environment variable settings.")
+        return
 
 def get_snkrdunk_trading_history(product_id, page=1, per_page=12, filter_psa10=True):
     """
