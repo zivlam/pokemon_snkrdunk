@@ -178,7 +178,22 @@ if __name__ == "__main__":
     ]
     
     print("🚀 Starting automated scraping task...")
-    for card_id in cards_to_track:
+    
+    # --- NEW: Fetch dynamically added IDs from Firebase ---
+    dynamic_ids = []
+    if db:
+        try:
+            docs = db.collection('snkrdunk_cards').stream()
+            dynamic_ids = [doc.id for doc in docs]
+            print(f"📦 Found {len(dynamic_ids)} total cards currently tracked in Firebase.")
+        except Exception as e:
+            print(f"⚠️ Could not fetch dynamic IDs from Firebase: {e}")
+
+    # Combine hardcoded and dynamic IDs, then remove duplicates using set()
+    all_tracking_ids = list(set(cards_to_track + dynamic_ids))
+    print(f"🔍 Total unique cards to scrape and update: {len(all_tracking_ids)}")
+
+    for card_id in all_tracking_ids:
         update_card_to_firebase(card_id)
         time.sleep(2)  # Pause for 2 seconds between requests to avoid getting blocked
         
