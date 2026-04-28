@@ -48,11 +48,10 @@ def format_to_hk_time(utc_date_str):
 
 def update_card_to_firebase(product_id, filter_psa10=True):
     """
-    Fetch SNKRDUNK trading history for cards, filter for PSA10, calculate HKD pricing,
+    Fetch SNKRDUNK trading history for cards, filter for PSA10,
     and push the updated data directly to Firebase.
     """
     hostname = "snkrdunk.com"
-    HKD_RATE = 0.051 # Set JPY to HKD exchange rate
     
     if not check_dns(hostname):
         print(f"❌ Network Warning: Could not resolve {hostname}.")
@@ -104,11 +103,10 @@ def update_card_to_firebase(product_id, filter_psa10=True):
 
                 hk_time = format_to_hk_time(raw_date)
 
-                # Calculate HKD Conversion
+                # Parse HKD Price directly from API
                 try:
-                    price_val = int(price)
-                    hkd_val = int(price_val * HKD_RATE)
-                except:
+                    hkd_val = int(price)
+                except ValueError:
                     hkd_val = 0
                 
                 parsed_history.append({
