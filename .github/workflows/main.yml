@@ -4,8 +4,8 @@ name: SNKRDUNK Real-time Tracker
 on:
   schedule:
     # cron syntax: minute hour day month day-of-week (UTC time)
-    # */30 * * * * means run every 30 minutes
-    - cron: '*/120 * * * *'
+    # */360 * * * * means run every 6 hours
+    - cron: '*/300 * * * *'
   
   # Allows us to manually trigger the workflow from the GitHub webpage for testing
   workflow_dispatch:
