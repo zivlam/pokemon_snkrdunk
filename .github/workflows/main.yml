@@ -5,7 +5,7 @@ on:
   schedule:
     # cron syntax: minute hour day month day-of-week (UTC time)
     # */360 * * * * means run every 6 hours
-    - cron: '*/300 * * * *'
+    - cron: '*/360 * * * *'
   
   # Allows us to manually trigger the workflow from the GitHub webpage for testing
   workflow_dispatch:
